@@ -136,7 +136,7 @@ def parse_html_for_content(html, join_string_by=''):
                 if text and re.search("['0-9A-Za-z ']+", text):
                     content.append(text)
     content = join_string_by.join(content)
-    return content, date_string , location
+    return content, date_string , location, bold_content
 
 
 def get_pagination_index(html):

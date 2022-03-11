@@ -32,14 +32,14 @@ def get_content_from_link(link, browser):
     if connect_to_base_url(browser, base_url=link):
         sleep(2)
         html = browser.page_source
-        content, date_string , location = parse_html_for_content(html, join_string_by="__:paragraph-seperator:__")
-        return content, date_string , location
+        content, date_string , location, bold_content = parse_html_for_content(html, join_string_by="__:paragraph-seperator:__")
+        return content, date_string , location, bold_content
 
 
 def run_process(filename, browser):
     output_list = get_cat_link_dict(filename, browser)
     cat_child_links_dict = {}
-    for cat_link in output_list:
+    for enum, cat_link in enumerate(output_list):
         for cat, link in cat_link.items():
             cat_child_links = []
             if connect_to_base_url(browser, base_url=link):
@@ -56,7 +56,7 @@ def run_process(filename, browser):
                         for item in category_child_links:
                             if item not in cat_child_links:
                                 cat_child_links.append(item)
-                    print("'{}' page{} completed ...".format(cat, page_num))
+                    print("'{}' page{} completed. {} Remaining".format(cat, page_num, len(output_list)-enum))
                 print("'{}' category parsing completed".format(cat))
             else:
                 print("'{}' something went wrong".format(cat))
@@ -86,6 +86,7 @@ def run_process(filename, browser):
     content_list = []
     date_string_list = []
     location_list = []
+    bold_content_list = []
     for key, values in cat_child_links_dict.items():
         for value in values:    
             category_list.append(key)
@@ -95,10 +96,11 @@ def run_process(filename, browser):
     category_counter = dict(Counter(category_list))
     count = 0
     for c, link in enumerate(link_list):
-        content, date_string , location = get_content_from_link(link, browser)
+        content, date_string , location, bold_content = get_content_from_link(link, browser)
         content_list.append(content)
         date_string_list.append(date_string)
         location_list.append(location)
+        bold_content_list.append(bold_content)
         total_length = len(link_list)-c
         remaining_length = category_counter[category_list[c]]
         category_counter[category_list[c]] -= 1
@@ -111,6 +113,7 @@ def run_process(filename, browser):
             df['content'] = content_list
             df['date_string'] = date_string_list
             df['location'] = location_list
+            df['bold_content'] = bold_content_list
             temp_folder = pathlib.Path(basedir) / 'output_temp_files'
             pathlib.os.makedirs(temp_folder, exist_ok=True)
             csv_path = temp_folder/ "df_{}.csv".format(count)
@@ -130,6 +133,7 @@ def run_process(filename, browser):
     df['content'] = content_list
     df['date_string'] = date_string_list
     df['location'] = location_list
+    df['bold_content'] = bold_content_list
     df.to_csv(filename)
     print("NewsVoir Webscraping completed")
 
