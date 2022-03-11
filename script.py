@@ -4,6 +4,7 @@ from time import sleep, time
 import pandas as pd
 import pathlib
 from collections import Counter
+import string
 try:
     basedir = pathlib.os.path.abspath(pathlib.os.path.dirname(__file__))
 except NameError:
@@ -61,9 +62,23 @@ def run_process(filename, browser):
                 print("'{}' something went wrong".format(cat))
             print("----------")
             print()
-            cat_child_links_dict[cat] = cat_child_links
-            cat_child_links_df = pd.DataFrame(cat_child_links_dict)
-            cat_child_links_df.to_csv('output_cat_child_links_df.csv')
+            kk_list = []
+            vv_list = []
+            for item in cat_child_links:
+                for kk, vv in item.items():
+                    kk_list.append(kk)
+                    vv_list.append(vv)                    
+            dd = pd.DataFrame()
+            dd['title'] = kk_list
+            dd['link'] = vv_list
+            temp_folder = pathlib.Path(basedir) / 'output_categories'
+            pathlib.os.makedirs(temp_folder, exist_ok=True)
+            cat_name = cat.strip()
+            for s in string.punctuation:
+                cat_name = cat_name.replace(s, '_')
+            cat_name = '_'.join(cat_name.split())
+            cat_csv_path = temp_folder/ "{}.csv".format(cat_name)
+            dd.to_csv(cat_csv_path)
     category_list = []
     title_list = []
     link_list = []
