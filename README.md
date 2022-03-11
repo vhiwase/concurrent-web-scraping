@@ -12,6 +12,8 @@ Check out the [blog post](https://testdriven.io/blog/building-a-concurrent-web-s
 
 1. Install the requirements
 
+1. Add chromedriver_win32\chromedriver.exe to C:\Windows\chromedriver.exe
+
 1. Run the scrapers:
 
     ```sh

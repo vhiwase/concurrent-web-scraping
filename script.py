@@ -1,18 +1,105 @@
 import datetime
 import sys
 from time import sleep, time
+import pandas as pd
+import pathlib
+from collections import Counter
+try:
+    basedir = pathlib.os.path.abspath(pathlib.os.path.dirname(__file__))
+except NameError:
+    basedir = pathlib.os.path.abspath(pathlib.os.path.dirname("."))
 
-from scrapers.scraper import connect_to_base, get_driver, parse_html, write_to_file
+
+try:
+    from scrapers.scraper import connect_to_base_url, get_driver, parse_base_html, parse_child_html, get_pagination_index, parse_html_for_content
+except ModuleNotFoundError:
+    pathlib.sys.path.insert(0, basedir)
+    from scrapers.scraper import connect_to_base_url, get_driver, parse_base_html, parse_child_html, get_pagination_index, parse_html_for_content
+
+
+def get_cat_link_dict(filename, browser):
+    if connect_to_base_url(browser):
+        sleep(2)
+        html = browser.page_source
+        output_list = parse_base_html(html)
+        return output_list 
+    else:
+        print("Error connecting to NewsVoir")
+        
+
+def get_content_from_link(link, browser):
+    if connect_to_base_url(browser, base_url=link):
+        sleep(2)
+        html = browser.page_source
+        content, date_string , location = parse_html_for_content(html, join_string_by="__:paragraph-seperator:__")
+        return content, date_string , location
 
 
 def run_process(filename, browser):
-    if connect_to_base(browser):
-        sleep(2)
-        html = browser.page_source
-        output_list = parse_html(html)
-        write_to_file(output_list, filename)
-    else:
-        print("Error connecting to Wikipedia")
+    output_list = get_cat_link_dict(filename, browser)
+    output_list = output_list[:3]
+    cat_child_links_dict = {}
+    for cat_link in output_list:
+        for cat, link in cat_link.items():
+            if connect_to_base_url(browser, base_url=link):
+                sleep(2)
+                html = browser.page_source
+                start, end = get_pagination_index(html)
+                start = 1
+                end = 3
+                cat_child_links = []
+                for page_num in range(start, end):
+                    base_url = "{0}&page={1}".format(link, page_num)
+                    if connect_to_base_url(browser, base_url=base_url):
+                        sleep(2)
+                        html_page = browser.page_source
+                        category_child_links = parse_child_html(html_page, base_url=base_url)
+                        for item in category_child_links:
+                            if item not in cat_child_links:
+                                cat_child_links.append(item)
+                    print("'{}' page{} completed ...".format(cat, page_num))
+                print("'{}' category parsing completed".format(cat))
+            else:
+                print("'{}' something went wrong".format(cat))
+            print("----------")
+            print()
+            cat_child_links_dict[cat] = cat_child_links
+    category_list = []
+    title_list = []
+    link_list = []
+    content_list = []
+    date_string_list = []
+    location_list = []
+    for key, values in cat_child_links_dict.items():
+        for value in values:    
+            category_list.append(key)
+            for title, link in value.items():
+                title_list.append(title)
+                link_list.append(link)
+    category_counter = dict(Counter(category_list))
+    for c, link in enumerate(link_list):
+        content, date_string , location = get_content_from_link(link, browser)
+        content_list.append(content)
+        date_string_list.append(date_string)
+        location_list.append(location)
+        total_length = len(link_list)-c
+        remaining_length = category_counter[category_list[c]]
+        category_counter[category_list[c]] -= 1
+        print("{}: {} file(s) remaining...\t\tTotal {} file(s) remaining ...\n".format(category_list[c], remaining_length, total_length))    
+    print()
+    print('-'*100)
+    print("Remaining counter dictionary:", category_counter)
+    print('-'*100)
+    print()
+    df = pd.DataFrame()
+    df['category'] = category_list
+    df['title'] = title_list
+    df['link'] = link_list
+    df['content'] = content_list
+    df['date_string'] = date_string_list
+    df['location'] = location_list
+    df.to_csv(filename)
+    print("NewsVoir Webscraping completed")
 
 
 if __name__ == "__main__":
@@ -34,10 +121,8 @@ if __name__ == "__main__":
     browser = get_driver(headless=headless)
 
     # scrape and crawl
-    while current_attempt <= 20:
-        print(f"Scraping Wikipedia #{current_attempt} time(s)...")
-        run_process(output_filename, browser)
-        current_attempt = current_attempt + 1
+    print(f"Scraping NewsVoir #{current_attempt} time(s)...")
+    run_process(output_filename, browser)
 
     # exit
     browser.quit()
