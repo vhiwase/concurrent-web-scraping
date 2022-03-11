@@ -37,16 +37,14 @@ def get_content_from_link(link, browser):
 
 def run_process(filename, browser):
     output_list = get_cat_link_dict(filename, browser)
-    output_list = output_list[:3]
     cat_child_links_dict = {}
     for cat_link in output_list:
         for cat, link in cat_link.items():
             if connect_to_base_url(browser, base_url=link):
                 sleep(2)
                 html = browser.page_source
+                # Deciding start page and end page
                 start, end = get_pagination_index(html)
-                start = 1
-                end = 3
                 cat_child_links = []
                 for page_num in range(start, end):
                     base_url = "{0}&page={1}".format(link, page_num)
