@@ -62,6 +62,8 @@ def run_process(filename, browser):
             print("----------")
             print()
             cat_child_links_dict[cat] = cat_child_links
+            cat_child_links_df = pd.DataFrame(cat_child_links_dict)
+            cat_child_links_df.to_csv('output_cat_child_links_df.csv')
     category_list = []
     title_list = []
     link_list = []
@@ -75,6 +77,7 @@ def run_process(filename, browser):
                 title_list.append(title)
                 link_list.append(link)
     category_counter = dict(Counter(category_list))
+    count = 0
     for c, link in enumerate(link_list):
         content, date_string , location = get_content_from_link(link, browser)
         content_list.append(content)
@@ -83,7 +86,22 @@ def run_process(filename, browser):
         total_length = len(link_list)-c
         remaining_length = category_counter[category_list[c]]
         category_counter[category_list[c]] -= 1
-        print("{}: {} file(s) remaining...\t\tTotal {} file(s) remaining ...\n".format(category_list[c], remaining_length, total_length))    
+        print("{}: {} file(s) remaining...\t\tTotal {} file(s) remaining ...\n".format(category_list[c], remaining_length, total_length))
+        if count%100==0:
+            df = pd.DataFrame()
+            df['category'] = category_list[:len(content_list)]
+            df['title'] = title_list[:len(content_list)]
+            df['link'] = link_list[:len(content_list)]
+            df['content'] = content_list
+            df['date_string'] = date_string_list
+            df['location'] = location_list
+            temp_folder = pathlib.Path(basedir) / 'output_temp_files'
+            pathlib.os.makedirs(temp_folder, exist_ok=True)
+            csv_path = temp_folder/ "df_{}.csv".format(count)
+            if isinstance(csv_path , pathlib.Path):
+                csv_path = csv_path.as_posix()
+            df.to_csv(csv_path)
+        count += 1
     print()
     print('-'*100)
     print("Remaining counter dictionary:", category_counter)
