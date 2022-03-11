@@ -41,12 +41,12 @@ def run_process(filename, browser):
     cat_child_links_dict = {}
     for cat_link in output_list:
         for cat, link in cat_link.items():
+            cat_child_links = []
             if connect_to_base_url(browser, base_url=link):
                 sleep(2)
                 html = browser.page_source
                 # Deciding start page and end page
                 start, end = get_pagination_index(html)
-                cat_child_links = []
                 for page_num in range(start, end):
                     base_url = "{0}&page={1}".format(link, page_num)
                     if connect_to_base_url(browser, base_url=base_url):
@@ -78,6 +78,7 @@ def run_process(filename, browser):
                 cat_name = cat_name.replace(s, '_')
             cat_name = '_'.join(cat_name.split())
             cat_csv_path = temp_folder/ "{}.csv".format(cat_name)
+            cat_child_links_dict[cat] = cat_child_links
             dd.to_csv(cat_csv_path)
     category_list = []
     title_list = []
