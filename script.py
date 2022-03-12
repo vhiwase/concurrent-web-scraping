@@ -56,7 +56,7 @@ def run_process(filename, browser):
                         for item in category_child_links:
                             if item not in cat_child_links:
                                 cat_child_links.append(item)
-                    print("Yaahoo '{}' page{} completed! but yaar '{}' categories are still pending ...".format(cat, page_num, len(output_list)-enum))
+                    print("Yaahoo '{}' page{} out of page{} are completed! but yaar '{}' categories are still pending ...".format(cat, page_num, end, len(output_list)-enum))
                 print("'{}' category parsing completed successfully! Let's have a small celebration ...".format(cat))
             else:
                 print("'{}' something went wrong".format(cat))

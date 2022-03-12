@@ -127,7 +127,7 @@ def parse_html_for_content(html, join_string_by=''):
     for td_tag in soup.find_all('td'):
         attrs = td_tag.attrs
         if 'class' in attrs.keys() and "toronto-text" in attrs['class'] and "article-body-res" in attrs['class']:
-            location = td_tag.b.text
+            location = td_tag.b and td_tag.b.text
             paragarphs = td_tag.find_all('p')
             for paragarph in paragarphs:
                 strong_phrase = paragarph.strong
@@ -158,7 +158,7 @@ def get_pagination_index(html):
     if page_numbers:
         end = max(page_numbers) + 1
     else:
-        end = 0
+        end = 1
     return start, end
 
 
