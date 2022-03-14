@@ -118,7 +118,8 @@ def run_process(filename, browser):
         max_done_files = max(max_done_files)
     else:
         max_done_files = 0
-    category_counter = dict(Counter(category_list[max_done_files:]))
+    category_list = category_list[max_done_files:]
+    category_counter = dict(Counter(category_list))
     count = max_done_files
     print("-----------------------------------------------")
     print("Total Done files are {}. Running script for files from first {} onwards ...".format(count, count))
