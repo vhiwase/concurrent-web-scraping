@@ -113,7 +113,7 @@ def run_process(filename, browser):
             category_list.append(csv_file.replace('.csv', ''))
     category_counter = dict(Counter(category_list))
     count = 0
-    for c, link in enumerate(link_list[:2]):
+    for c, link in enumerate(link_list):
         content, date_string , location, bold_content, source_link_text, source_link = get_content_from_link(link, browser)
         content_list.append(content)
         date_string_list.append(date_string)
