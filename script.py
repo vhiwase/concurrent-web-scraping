@@ -104,7 +104,7 @@ def run_process(filename, browser):
                     title_list.append(title)
                     link_list.append(link)
     else:
-        for csv_file in os.listdir(category_folder):
+        for csv_file in sorted(set(os.listdir(category_folder))):
             csv_path = category_folder/csv_file
             csv_path = csv_path.as_posix()
             df = pd.read_csv(csv_path, index_col=[0])
