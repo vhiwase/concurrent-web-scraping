@@ -126,7 +126,18 @@ def run_process(filename, browser):
     print("-----------------------------------------------")
     print("Total Done files are {}. Running script for files from first {} onwards ...".format(count, count))
     print("_______________________________________________")
-    df_checkpoint = pd.read_csv((temp_folder/'df_{}.csv'.format(1000)).as_posix(), index_col=[0])
+    try:
+        df_checkpoint = pd.read_csv((temp_folder/'df_{}.csv'.format(max_done_files-1)).as_posix(), index_col=[0])
+    except FileNotFoundError:
+        df_checkpoint = pd.DataFrame(columns = ['category',
+         'title',
+         'link',
+         'content',
+         'date_string',
+         'location',
+         'bold_content',
+         'source_link_text',
+         'source_link'])        
     for c, link in enumerate(link_list[max_done_files:]):
         content, date_string , location, bold_content, source_link_text, source_link = get_content_from_link(link, browser)
         content_list.append(content)
@@ -141,15 +152,15 @@ def run_process(filename, browser):
         print("Sr.No.{}| {}: {} file(s) remaining...\t\tTotal {} file(s) remaining ...\n".format((max_done_files+c), category_list[c], remaining_length, total_length))
         if count%1000==0:
             df = pd.DataFrame()
-            df['category'] = category_list[:len(content_list)]
-            df['title'] = title_list[:len(content_list)]
-            df['link'] = link_list[:len(content_list)]
-            df['content'] = content_list
-            df['date_string'] = date_string_list
-            df['location'] = location_list
-            df['bold_content'] = bold_content_list
-            df['source_link_text'] = source_link_text_list
-            df['source_link'] = source_link_list
+            df['category'] = df_checkpoint.category.tolist() + category_list[:len(content_list)]
+            df['title'] = df_checkpoint.title.tolist() + title_list[:len(content_list)]
+            df['link'] = df_checkpoint.link.tolist() + link_list[:len(content_list)]
+            df['content'] = df_checkpoint.content.tolist() + content_list
+            df['date_string'] = df_checkpoint.date_string.tolist() + date_string_list
+            df['location'] = df_checkpoint.location.tolist() + location_list
+            df['bold_content'] = df_checkpoint.bold_content.tolist() + bold_content_list
+            df['source_link_text'] = df_checkpoint.source_link_text.tolist() + source_link_text_list
+            df['source_link'] = df_checkpoint.source_link.tolist() + source_link_list
             csv_path = temp_folder/ "df_{}.csv".format(count)
             if isinstance(csv_path , pathlib.Path):
                 csv_path = csv_path.as_posix()
