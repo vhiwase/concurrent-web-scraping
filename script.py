@@ -111,9 +111,19 @@ def run_process(filename, browser):
             title_list.extend(df.title.tolist())
             link_list.extend(df.link.tolist())
             category_list.extend([csv_file.replace('.csv', '')]*len(df))
-    category_counter = dict(Counter(category_list))
-    count = 0
-    for c, link in enumerate(link_list):
+    temp_folder = pathlib.Path(basedir) / 'output_temp_files'
+    pathlib.os.makedirs(temp_folder, exist_ok=True)
+    max_done_files = [int(f.replace('df_', '').replace('.csv', '')) for f in os.listdir(temp_folder)]
+    if max_done_files:
+        max_done_files = max(max_done_files)
+    else:
+        max_done_files = 0
+    category_counter = dict(Counter(category_list[max_done_files:]))
+    count = max_done_files
+    print("-----------------------------------------------")
+    print("Total Done files are {}. Running script for files from first {} onwards ...".format(count, count))
+    print("_______________________________________________")
+    for c, link in enumerate(link_list[max_done_files:]):
         content, date_string , location, bold_content, source_link_text, source_link = get_content_from_link(link, browser)
         content_list.append(content)
         date_string_list.append(date_string)
@@ -125,7 +135,7 @@ def run_process(filename, browser):
         remaining_length = category_counter[category_list[c]]
         category_counter[category_list[c]] -= 1
         print("{}: {} file(s) remaining...\t\tTotal {} file(s) remaining ...\n".format(category_list[c], remaining_length, total_length))
-        if count%100==0:
+        if count%1000==0:
             df = pd.DataFrame()
             df['category'] = category_list[:len(content_list)]
             df['title'] = title_list[:len(content_list)]
@@ -136,9 +146,6 @@ def run_process(filename, browser):
             df['bold_content'] = bold_content_list
             df['source_link_text'] = source_link_text_list
             df['source_link'] = source_link_list
-            
-            temp_folder = pathlib.Path(basedir) / 'output_temp_files'
-            pathlib.os.makedirs(temp_folder, exist_ok=True)
             csv_path = temp_folder/ "df_{}.csv".format(count)
             if isinstance(csv_path , pathlib.Path):
                 csv_path = csv_path.as_posix()
