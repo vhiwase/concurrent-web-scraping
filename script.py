@@ -134,7 +134,7 @@ def run_process(filename, browser):
         total_length = len(link_list)-c
         remaining_length = category_counter[category_list[c]]
         category_counter[category_list[c]] -= 1
-        print("{}: {} file(s) remaining...\t\tTotal {} file(s) remaining ...\n".format(category_list[c], remaining_length, total_length))
+        print("Sr.No.{}| {}: {} file(s) remaining...\t\tTotal {} file(s) remaining ...\n".format((max_done_files+c), category_list[c], remaining_length, total_length))
         if count%1000==0:
             df = pd.DataFrame()
             df['category'] = category_list[:len(content_list)]
