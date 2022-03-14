@@ -110,7 +110,7 @@ def run_process(filename, browser):
             df = pd.read_csv(csv_path, index_col=[0])
             title_list.extend(df.title.tolist())
             link_list.extend(df.link.tolist())
-            category_list.append(csv_file.replace('.csv', ''))
+            category_list.extend([csv_file.replace('.csv', '')]*len(df))
     category_counter = dict(Counter(category_list))
     count = 0
     for c, link in enumerate(link_list):
