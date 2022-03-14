@@ -120,10 +120,13 @@ def run_process(filename, browser):
         max_done_files = 0
     category_list = category_list[max_done_files:]
     category_counter = dict(Counter(category_list))
+    if max_done_files>0: 
+        max_done_files+= 1
     count = max_done_files
     print("-----------------------------------------------")
     print("Total Done files are {}. Running script for files from first {} onwards ...".format(count, count))
     print("_______________________________________________")
+    df_checkpoint = pd.read_csv((temp_folder/'df_{}.csv'.format(1000)).as_posix(), index_col=[0])
     for c, link in enumerate(link_list[max_done_files:]):
         content, date_string , location, bold_content, source_link_text, source_link = get_content_from_link(link, browser)
         content_list.append(content)
@@ -167,6 +170,7 @@ def run_process(filename, browser):
     df['bold_content'] = bold_content_list
     df['source_link_text'] = source_link_text_list
     df['source_link'] = source_link_list
+    df = df_checkpoint.append(df).reset_index(drop=True)
     df.to_csv(filename)
     if len(title_list) == len(content_list):
         print("NewsVoir Webscraping completed successfully")
