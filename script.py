@@ -1,5 +1,6 @@
 import datetime
 import sys
+import os
 from time import sleep, time
 import pandas as pd
 import pathlib
@@ -32,11 +33,11 @@ def get_content_from_link(link, browser):
     if connect_to_base_url(browser, base_url=link):
         sleep(2)
         html = browser.page_source
-        content, date_string , location, bold_content = parse_html_for_content(html, join_string_by="__:paragraph-seperator:__")
-        return content, date_string , location, bold_content
+        content, date_string , location, bold_content, source_link_text, source_link = parse_html_for_content(html, join_string_by="__:paragraph-seperator:__")
+        return content, date_string , location, bold_content, source_link_text, source_link
 
 
-def run_process(filename, browser):
+def save_categories(filename, browser):
     output_list = get_cat_link_dict(filename, browser)
     cat_child_links_dict = {}
     for enum, cat_link in enumerate(output_list):
@@ -80,6 +81,10 @@ def run_process(filename, browser):
             cat_csv_path = temp_folder/ "{}.csv".format(cat_name)
             cat_child_links_dict[cat] = cat_child_links
             dd.to_csv(cat_csv_path)
+    return cat_child_links_dict
+            
+
+def run_process(filename, browser):
     category_list = []
     title_list = []
     link_list = []
@@ -87,20 +92,35 @@ def run_process(filename, browser):
     date_string_list = []
     location_list = []
     bold_content_list = []
-    for key, values in cat_child_links_dict.items():
-        for value in values:    
-            category_list.append(key)
-            for title, link in value.items():
-                title_list.append(title)
-                link_list.append(link)
+    source_link_text_list = []
+    source_link_list = []
+    category_folder = (pathlib.Path(basedir) / 'categories')
+    if not category_folder.is_dir():
+        cat_child_links_dict = save_categories(filename, browser)
+        for key, values in cat_child_links_dict.items():
+            for value in values:    
+                category_list.append(key)
+                for title, link in value.items():
+                    title_list.append(title)
+                    link_list.append(link)
+    else:
+        for csv_file in os.listdir(category_folder):
+            csv_path = category_folder/csv_file
+            csv_path = csv_path.as_posix()
+            df = pd.read_csv(csv_path, index_col=[0])
+            title_list.extend(df.title.tolist())
+            link_list.extend(df.link.tolist())
+            category_list.append(csv_file.replace('.csv', ''))
     category_counter = dict(Counter(category_list))
     count = 0
-    for c, link in enumerate(link_list):
-        content, date_string , location, bold_content = get_content_from_link(link, browser)
+    for c, link in enumerate(link_list[:2]):
+        content, date_string , location, bold_content, source_link_text, source_link = get_content_from_link(link, browser)
         content_list.append(content)
         date_string_list.append(date_string)
         location_list.append(location)
         bold_content_list.append(bold_content)
+        source_link_text_list.append(source_link_text)
+        source_link_list.append(source_link)
         total_length = len(link_list)-c
         remaining_length = category_counter[category_list[c]]
         category_counter[category_list[c]] -= 1
@@ -114,6 +134,9 @@ def run_process(filename, browser):
             df['date_string'] = date_string_list
             df['location'] = location_list
             df['bold_content'] = bold_content_list
+            df['source_link_text'] = source_link_text_list
+            df['source_link'] = source_link_list
+            
             temp_folder = pathlib.Path(basedir) / 'output_temp_files'
             pathlib.os.makedirs(temp_folder, exist_ok=True)
             csv_path = temp_folder/ "df_{}.csv".format(count)
@@ -127,15 +150,21 @@ def run_process(filename, browser):
     print('-'*100)
     print()
     df = pd.DataFrame()
-    df['category'] = category_list
-    df['title'] = title_list
-    df['link'] = link_list
+    df['category'] = category_list[:len(content_list)]
+    df['title'] = title_list[:len(content_list)]
+    df['link'] = link_list[:len(content_list)]
     df['content'] = content_list
     df['date_string'] = date_string_list
     df['location'] = location_list
     df['bold_content'] = bold_content_list
+    df['source_link_text'] = source_link_text_list
+    df['source_link'] = source_link_list
     df.to_csv(filename)
-    print("NewsVoir Webscraping completed")
+    if len(title_list) == len(content_list):
+        print("NewsVoir Webscraping completed successfully")
+    else:
+        print("NewsVoir Webscraping completed but there are some problems with some files. Please take a look.")
+
 
 
 if __name__ == "__main__":

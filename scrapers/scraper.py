@@ -118,16 +118,23 @@ def parse_html_for_content(html, join_string_by=''):
     date_string = None
     content = []
     bold_content = []
+    source_link_text = None
+    source_link = None
     for div_tag in soup.find_all('div'):
         attrs = div_tag.attrs
         if 'class' in attrs.keys() and "coments-main" in attrs['class']:
             if 'class' in div_tag.div.attrs and "aug" in div_tag.div.attrs['class']:
                 match = re.search("['0-9A-Za-z :,']+", div_tag.div.text)
-                date_string = match.string[match.span()[0]:match.span()[1]].strip()
+                date_string = match and match.string[match.span()[0]:match.span()[1]].strip()
+        if 'class' in attrs.keys() and "progressive1" in attrs['class']:
+                source_link_anker = div_tag.a 
+                if 'href' in source_link_anker.attrs:
+                    source_link = source_link_anker.attrs['href']
+                source_link_text = source_link_anker.text
     for td_tag in soup.find_all('td'):
         attrs = td_tag.attrs
         if 'class' in attrs.keys() and "toronto-text" in attrs['class'] and "article-body-res" in attrs['class']:
-            location = td_tag.b and td_tag.b.text
+            location = td_tag and td_tag.b and td_tag.b.text
             paragarphs = td_tag.find_all('p')
             for paragarph in paragarphs:
                 strong_phrase = paragarph.strong
@@ -136,7 +143,7 @@ def parse_html_for_content(html, join_string_by=''):
                 if text and re.search("['0-9A-Za-z ']+", text):
                     content.append(text)
     content = join_string_by.join(content)
-    return content, date_string , location, bold_content
+    return content, date_string , location, bold_content, source_link_text, source_link
 
 
 def get_pagination_index(html):
