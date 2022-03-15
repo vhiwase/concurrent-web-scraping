@@ -146,7 +146,7 @@ def run_process(filename, browser):
         bold_content_list.append(bold_content)
         source_link_text_list.append(source_link_text)
         source_link_list.append(source_link)
-        total_length = len(link_list)-c
+        total_length = len(link_list[max_done_files:])-c
         remaining_length = category_counter[category_list[c]]
         category_counter[category_list[c]] -= 1
         print("Sr.No.{}| {}: {} file(s) remaining...\t\tTotal {} file(s) remaining ...\n".format((max_done_files+c), category_list[c], remaining_length, total_length))
