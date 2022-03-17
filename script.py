@@ -33,7 +33,13 @@ def get_content_from_link(link, browser):
     if connect_to_base_url(browser, base_url=link):
         sleep(2)
         html = browser.page_source
-        content, date_string , location, bold_content, source_link_text, source_link = parse_html_for_content(html, join_string_by="__:paragraph-seperator:__")
+        try:
+            content, date_string , location, bold_content, source_link_text, source_link = parse_html_for_content(html, join_string_by="__:paragraph-seperator:__")
+        except:
+            connect_to_base_url(browser, base_url=link)
+            sleep(5)
+            html = browser.page_source
+            content, date_string , location, bold_content, source_link_text, source_link = parse_html_for_content(html, join_string_by="__:paragraph-seperator:__")
         return content, date_string , location, bold_content, source_link_text, source_link
 
 
@@ -139,7 +145,11 @@ def run_process(filename, browser):
          'source_link_text',
          'source_link'])        
     for c, link in enumerate(link_list[max_done_files:]):
-        content, date_string , location, bold_content, source_link_text, source_link = get_content_from_link(link, browser)
+        try:
+            content, date_string , location, bold_content, source_link_text, source_link = get_content_from_link(link, browser)
+        except:
+            browser = get_driver(headless=False)
+            content, date_string , location, bold_content, source_link_text, source_link = get_content_from_link(link, browser)
         content_list.append(content)
         date_string_list.append(date_string)
         location_list.append(location)
@@ -209,9 +219,9 @@ if __name__ == "__main__":
     browser = get_driver(headless=headless)
 
     # scrape and crawl
-    print(f"Scraping NewsVoir #{current_attempt} time(s)...")
+    print(f"Scraping Wikipedia #{current_attempt} time(s)...")
     run_process(output_filename, browser)
-
+ 
     # exit
     browser.quit()
     end_time = time()
