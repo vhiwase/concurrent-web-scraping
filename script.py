@@ -36,10 +36,18 @@ def get_content_from_link(link, browser):
         try:
             content, date_string , location, bold_content, source_link_text, source_link = parse_html_for_content(html, join_string_by="__:paragraph-seperator:__")
         except:
+            browser.refresh()
             connect_to_base_url(browser, base_url=link)
             sleep(5)
             html = browser.page_source
-            content, date_string , location, bold_content, source_link_text, source_link = parse_html_for_content(html, join_string_by="__:paragraph-seperator:__")
+            try:
+                content, date_string , location, bold_content, source_link_text, source_link = parse_html_for_content(html, join_string_by="__:paragraph-seperator:__")
+            except:
+                browser.refresh()
+                connect_to_base_url(browser, base_url=link)
+                sleep(3)
+                html = browser.page_source
+                content, date_string , location, bold_content, source_link_text, source_link = parse_html_for_content(html, join_string_by="__:paragraph-seperator:__")
         return content, date_string , location, bold_content, source_link_text, source_link
 
 
@@ -148,7 +156,7 @@ def run_process(filename, browser):
         try:
             content, date_string , location, bold_content, source_link_text, source_link = get_content_from_link(link, browser)
         except:
-            browser = get_driver(headless=False)
+            browser.refresh()
             content, date_string , location, bold_content, source_link_text, source_link = get_content_from_link(link, browser)
         content_list.append(content)
         date_string_list.append(date_string)
