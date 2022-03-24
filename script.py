@@ -10,7 +10,7 @@ try:
     basedir = pathlib.os.path.abspath(pathlib.os.path.dirname(__file__))
 except NameError:
     basedir = pathlib.os.path.abspath(pathlib.os.path.dirname("."))
-
+import random
 
 try:
     from scrapers.scraper import connect_to_base_url, get_driver, parse_base_html, parse_child_html, get_pagination_index, parse_html_for_content
@@ -21,7 +21,7 @@ except ModuleNotFoundError:
 
 def get_cat_link_dict(filename, browser):
     if connect_to_base_url(browser):
-        sleep(2)
+        sleep(random.randint(2, 7))
         html = browser.page_source
         output_list = parse_base_html(html)
         return output_list 
@@ -31,7 +31,7 @@ def get_cat_link_dict(filename, browser):
 
 def get_content_from_link(link, browser):
     if connect_to_base_url(browser, base_url=link):
-        sleep(2)
+        sleep(random.randint(2, 7))
         html = browser.page_source
         try:
             content, date_string , location, bold_content, source_link_text, source_link = parse_html_for_content(html, join_string_by="__:paragraph-seperator:__")
@@ -129,17 +129,26 @@ def run_process(filename, browser):
     pathlib.os.makedirs(temp_folder, exist_ok=True)
     max_done_files = [int(f.replace('df_', '').replace('.csv', '')) for f in os.listdir(temp_folder)]
     if max_done_files:
-        max_done_files = max(max_done_files)
+        max_done_files = max(max_done_files) + 1
     else:
         max_done_files = 0
-    category_list = category_list[max_done_files:]
-    category_counter = dict(Counter(category_list))
-    if max_done_files>0: 
-        max_done_files+= 1
-    count = max_done_files
-    print("-----------------------------------------------")
-    print("Total Done files are {}. Running script for files from first {} onwards ...".format(count, count))
-    print("_______________________________________________")
+    check_point_iteration_number = 10
+    # csv_path_ckp is used to override files alter every check_point_iteration_number iteration. This can act as a checkpoint.
+    csv_path_ckp = temp_folder/ "df_{}.csv".format(check_point_iteration_number)
+    if isinstance(csv_path_ckp , pathlib.Path):
+        csv_path_ckp = csv_path_ckp.as_posix()
+    try:
+        df_ckp = pd.read_csv(csv_path_ckp, index_col=[0])
+    except FileNotFoundError:
+        df_ckp = pd.DataFrame(columns = ['category',
+         'title',
+         'link',
+         'content',
+         'date_string',
+         'location',
+         'bold_content',
+         'source_link_text',
+         'source_link'])
     try:
         df_checkpoint = pd.read_csv((temp_folder/'df_{}.csv'.format(max_done_files-1)).as_posix(), index_col=[0])
     except FileNotFoundError:
@@ -151,7 +160,20 @@ def run_process(filename, browser):
          'location',
          'bold_content',
          'source_link_text',
-         'source_link'])        
+         'source_link'])
+    print()
+    print("len(df_ckp): ", len(df_ckp))
+    print("len(df_checkpoint): ", len(df_checkpoint))
+    if len(df_ckp) > len(df_checkpoint):
+        df_checkpoint = df_ckp.copy()
+    max_done_files = len(df_checkpoint)
+    category_list = category_list[max_done_files:]
+    category_counter = dict(Counter(category_list))
+    count = max_done_files
+    print("-----------------------------------------------")
+    print("Total Done files are {}. Running script for files from first {} onwards ...".format(count, count))
+    print("_______________________________________________")
+    print()
     for c, link in enumerate(link_list[max_done_files:]):
         try:
             content, date_string , location, bold_content, source_link_text, source_link = get_content_from_link(link, browser)
@@ -183,12 +205,24 @@ def run_process(filename, browser):
             if isinstance(csv_path , pathlib.Path):
                 csv_path = csv_path.as_posix()
             df.to_csv(csv_path)
+            print()
+            print('-'*100)
+            print("Remaining counter dictionary:", category_counter)
+            print('-'*100)
+            print()
+        if count%10==0:
+            df = pd.DataFrame()
+            df['category'] = df_checkpoint.category.tolist() + category_list[:len(content_list)]
+            df['title'] = df_checkpoint.title.tolist() + title_list[:len(content_list)]
+            df['link'] = df_checkpoint.link.tolist() + link_list[:len(content_list)]
+            df['content'] = df_checkpoint.content.tolist() + content_list
+            df['date_string'] = df_checkpoint.date_string.tolist() + date_string_list
+            df['location'] = df_checkpoint.location.tolist() + location_list
+            df['bold_content'] = df_checkpoint.bold_content.tolist() + bold_content_list
+            df['source_link_text'] = df_checkpoint.source_link_text.tolist() + source_link_text_list
+            df['source_link'] = df_checkpoint.source_link.tolist() + source_link_list
+            df.to_csv(csv_path_ckp)
         count += 1
-    print()
-    print('-'*100)
-    print("Remaining counter dictionary:", category_counter)
-    print('-'*100)
-    print()
     df = pd.DataFrame()
     df['category'] = category_list[:len(content_list)]
     df['title'] = title_list[:len(content_list)]
